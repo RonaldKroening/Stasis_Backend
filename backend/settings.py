@@ -78,11 +78,11 @@ AUTH_USER_MODEL = 'myapp.User'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db',       
-        'USER': 'admin',          
-        'PASSWORD': 'adminpass', 
-        'HOST': 'localhost',       
-        'PORT': '5432',             
+        'NAME': '',       
+        'USER': '',          
+        'PASSWORD': '', 
+        'HOST': '',       
+        'PORT': '',             
     }
 }
 
