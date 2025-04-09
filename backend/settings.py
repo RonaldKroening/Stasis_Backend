@@ -73,6 +73,8 @@ TEMPLATES = [
     },
 ]
 
+AUTH_USER_MODEL = 'myapp.User'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',

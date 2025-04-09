@@ -1,33 +1,34 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
-import bcrypt
-class User(models.Model):
-    username = models.CharField(max_length=30)
-    password = models.CharField(max_length=50)
-    watchlist = models.TextField()
-    def __str__(self):
-        return self.username
+from datetime import datetime, timedelta
+import math
+
+
+
+class User(AbstractUser):
+    watchlist = models.TextField(blank=True, default="")
     
     def get_watchlist(self):
-        W = self.watchlist.split("@")
-        W.pop(-1)
-        return W
-    
+        if self.watchlist:
+            return self.watchlist.split("@")[:-1] 
+        return []
+
     def add_to_watchlist(self, tckr):
-        if(tckr not in self.watchlist):
-            self.watchlist = self.watchlist+ (tckr+"@")
-    
-    def remove_from_watchlist(self,tckr):
-        self.watchlist = self.watchlist.replace("tckr@","")      
-    
-    def valid(self, username,password):
-        if bcrypt.checkpw(password.encode('utf-8'), self.password.encode('utf-8')) and self.username == username:
-            return True
-        else:
-            return False
+        if tckr and f"{tckr}@" not in self.watchlist:
+            self.watchlist += f"{tckr}@"
+            self.save()
+
+    def remove_from_watchlist(self, tckr):
+        if tckr and f"{tckr}@" in self.watchlist:
+            self.watchlist = self.watchlist.replace(f"{tckr}@", "")
+            self.save()
+
+    def __str__(self):
+        return self.username
 
 
 class Stock(models.Model):
-    id = models.CharField(max_length=20, unique=True, primary_key=True)
+    id = models.BigAutoField(primary_key=True)  # Auto-incrementing 64-bit integer
     ticker = models.CharField(max_length=10)
     name = models.CharField(max_length=100)
     description = models.TextField()
@@ -48,18 +49,22 @@ class Stock(models.Model):
     total_equity = models.BigIntegerField(null=True, blank=True)
     total_liabilities = models.BigIntegerField(null=True, blank=True)
     last_updated = models.DateField(auto_now=True)
-    similar = models.TextField()
+    similarassets = models.TextField()
 
+    def needsRefresh(self):
+        today = datetime.now().date()
+        one_year_ago = today - timedelta(days=365)
+        return self.last_updated <= one_year_ago
 
     def get_similar(self):
-        S = self.similar.split("@")
+        S = self.similarassets.split("@")
         return S
     
-    def update_similar(self,new_sim):
+    def update_similar(self, new_sim):
         st = ""
         for ticker in new_sim:
-            st += (ticker+"@")
-        self.similar = st
+            st += (ticker + "@")
+        self.similarassets = st
     
     def __str__(self):
         return f"{self.name} ({self.ticker})"
@@ -74,21 +79,28 @@ class Stock(models.Model):
             return "N/A"
         return f"{value:.2f}%"
 
+    def replace_nan(self, value):
+        # Check if the value is NaN
+        if isinstance(value, float) and math.isnan(value):
+            return -1
+        return value
+
     def marketItems(self):
-        return {
-            "market_capitalization": self.moneyForm(self.market_capitalization),
-            "basic_eps": self.basic_eps,
-            "diluted_eps": self.diluted_eps,
-            "dividend_yield": self.percentForm(self.dividend_yield),
-            "free_cash_flow": self.moneyForm(self.free_cash_flow),
-            "net_income": self.moneyForm(self.net_income),
-            "pe_ratio": self.pe_ratio,
-            "ps_ratio": self.ps_ratio,
-            "profit_margin": self.percentForm(self.profit_margin),
-            "revenues": self.moneyForm(self.revenues),
-            "total_equity": self.moneyForm(self.total_equity),
-            "total_liabilities": self.moneyForm(self.total_liabilities),
+        ret = {
+            "Market Capitalization": self.replace_nan(self.moneyForm(self.market_capitalization)),
+            "Basic EPS": self.replace_nan(self.basic_eps),
+            "Diluted EPS": self.replace_nan(self.diluted_eps),
+            "Dividend Yield": self.replace_nan(self.percentForm(self.dividend_yield)),
+            "Free Cash Flow": self.replace_nan(self.moneyForm(self.free_cash_flow)),
+            "Net_income": self.replace_nan(self.moneyForm(self.net_income)),
+            "PE Ratio": self.replace_nan(self.pe_ratio),
+            "PS Ratio": self.replace_nan(self.ps_ratio),
+            "Profit Margin": self.replace_nan(self.percentForm(self.profit_margin)),
+            "Revenues": self.replace_nan(self.moneyForm(self.revenues)),
+            "Total Equity": self.replace_nan(self.moneyForm(self.total_equity)),
+            "Total Liabilities": self.replace_nan(self.moneyForm(self.total_liabilities)),
         }
+        return ret
         
     def data(self):
         return {
@@ -99,7 +111,8 @@ class Stock(models.Model):
             "djia": self.djia,
             "sp500": self.sp500,
             "last_updated": self.last_updated.strftime("%Y-%m-%d") if self.last_updated else "N/A",
-            "market_items": self.marketItems()
+            "market_items": self.marketItems(),
+            "similar" : self.similarassets
         }
         
     def updateItem(self, key, value):

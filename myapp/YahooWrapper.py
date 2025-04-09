@@ -33,8 +33,6 @@ class YahooWrapper:
         item_names = []
         
 
-        print(type(df.columns[0])," ",str(type(df.columns[0])))
-        print(df.columns)
         years = [str(col).split(" ")[0] for col in df.columns]
         
         data = {}
@@ -77,6 +75,8 @@ class YahooWrapper:
 
 
     def financial_statements(self,stock):
+        if(isinstance(stock,str)):  
+            stock = yf.Ticker(stock)
         income_statement = stock.financials
         balance_sheet = stock.balance_sheet
         cash_flow = stock.cashflow
@@ -93,6 +93,8 @@ class YahooWrapper:
         return hm
         
     def data(self,ticker):
+        if(isinstance(ticker,str)):
+            ticker = yf.Ticker(ticker)
         financial_data = ticker.info
         metrics = {
             "market_capitalization": self.formatNumber(financial_data.get("marketCap", "N/A")),
@@ -121,21 +123,21 @@ class YahooWrapper:
         }
         return md
 
+    def df_to_json(self, data):
+        cols_needed = ['Open', 'High', 'Low', 'Close', 'Volume']
+        ret = {}
+        for index, row in data.iterrows():
+            date = index.strftime('%Y-%m-%d')
+            row_data = {col: row[col] for col in cols_needed}
+            ret[date] = row_data
+        
+        return ret
+        
     def chart(self, ticker):
+        if(isinstance(ticker,str)):
+            ticker = yf.Ticker(ticker)
         hd = ticker.history(period="ytd")
         
         data = hd.reset_index().set_index('Date') 
+        data = self.df_to_json(data)
         return data
-    
-    def refresh(self):
-        tckr = self.ticker
-        ticker = yf.Ticker(tckr)
-        ret = {
-            "data" : self.data(ticker),
-            "chart" : self.chart(ticker),
-            "financial_statements" : self.financial_statements(ticker)
-        }
-        if(isinstance(ret['chart'], pd.DataFrame)):
-            ret['chart'] = self.format_df(ret['chart'])
-        
-        return ret
