@@ -1,0 +1,1 @@
+ssh -i first_ec_inst.pem RonaldKroening@54.166.146.113

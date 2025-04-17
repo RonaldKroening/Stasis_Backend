@@ -1,3 +1,4 @@
+import os 
 """
 Django settings for backend project.
 
@@ -20,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8f$y9vwtv$y2f-$v2c#6x5)73ji=of+74xf8sm)__r-b^2@(5#'
+SECRET_KEY = os.environ.get("sct-key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -78,18 +79,20 @@ AUTH_USER_MODEL = 'myapp.User'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': '',       
-        'USER': '',          
-        'PASSWORD': '', 
-        'HOST': '',       
-        'PORT': '',             
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
 
-AWS_ACCESS_KEY_ID = 'your-access-key-id'
-AWS_SECRET_ACCESS_KEY = 'your-secret-access-key'
-AWS_STORAGE_BUCKET_NAME = 'your-bucket-name'
+
+
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os,.environ.get('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_REGION_NAME = 'us-east-1'  
 
 WSGI_APPLICATION = 'backend.wsgi.application'
