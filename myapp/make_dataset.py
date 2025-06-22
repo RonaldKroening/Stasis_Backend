@@ -10,15 +10,13 @@ DB_CONFIG = {
     'port': '5432'
 }
 
-# # Load JSON data
+
 # with open('myapp_stock_db.json', 'r') as file:
 #     data = json.load(file)
 
-# # Connect to the database
 # conn = psycopg2.connect(**DB_CONFIG)
 # cursor = conn.cursor()
 
-# # Create table if not exists
 # create_table_query = """
 # CREATE TABLE IF NOT EXISTS stocks (
 #     ticker TEXT PRIMARY KEY,
@@ -44,6 +42,8 @@ DB_CONFIG = {
 #     similarTo TEXT
 # );
 # """
+
+
 # cursor.execute(create_table_query)
 
 # # Insert data into the table
